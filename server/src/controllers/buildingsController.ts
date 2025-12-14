@@ -8,7 +8,7 @@ export const getAllBuildings = async (
 ): Promise<void> => {
     try {
         const [rows] = await pool.query<Building[]>(
-            'SELECT * FROM buildings ORDER BY building_name'
+            'SELECT * FROM building ORDER BY building_name'
         );
         res.json(rows);
     } catch (error) {
@@ -24,7 +24,7 @@ export const getBuildingById = async (
     try {
         const { id } = req.params;
         const [rows] = await pool.query<Building[]>(
-            'SELECT * FROM buildings WHERE building_id = ?',
+            'SELECT * FROM building WHERE building_id = ?',
             [id]
         );
 
@@ -53,12 +53,12 @@ export const createBuilding = async (
         }
 
         const [result] = await pool.query<ResultSetHeader>(
-            'INSERT INTO buildings (building_name) VALUES (?)',
+            'INSERT INTO building (building_name) VALUES (?)',
             [building_name]
         );
 
         const [rows] = await pool.query<Building[]>(
-            'SELECT * FROM buildings WHERE building_id = ?',
+            'SELECT * FROM building WHERE building_id = ?',
             [result.insertId]
         );
 
@@ -83,7 +83,7 @@ export const updateBuilding = async (
         }
 
         const [result] = await pool.query<ResultSetHeader>(
-            'UPDATE buildings SET building_name = ? WHERE building_id = ?',
+            'UPDATE building SET building_name = ? WHERE building_id = ?',
             [building_name, id]
         );
 
@@ -93,7 +93,7 @@ export const updateBuilding = async (
         }
 
         const [rows] = await pool.query<Building[]>(
-            'SELECT * FROM buildings WHERE building_id = ?',
+            'SELECT * FROM building WHERE building_id = ?',
             [id]
         );
         res.json(rows[0]);
@@ -111,7 +111,7 @@ export const deleteBuilding = async (
         const { id } = req.params;
 
         const [result] = await pool.query<ResultSetHeader>(
-            'DELETE FROM buildings WHERE building_id = ?',
+            'DELETE FROM building WHERE building_id = ?',
             [id]
         );
 

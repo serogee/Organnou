@@ -13,7 +13,7 @@ import { RowDataPacket } from 'mysql2';
 const getDescendantTopics = async (topicId: number): Promise<number[]> => {
     const descendants: number[] = [topicId];
     const [children] = await pool.query<Topic[]>(
-        'SELECT topic_id FROM topics WHERE parent_topic_id = ?',
+        'SELECT topic_id FROM topic WHERE parent_topic_id = ?',
         [topicId]
     );
 
@@ -32,7 +32,7 @@ export const getAllAnnouncements = async (
     try {
         const topicIds = req.query.topicIds as string | undefined;
 
-        let query = 'SELECT DISTINCT a.* FROM announcements a';
+        let query = 'SELECT DISTINCT a.* FROM announcement a';
         const params: number[] = [];
 
         if (topicIds) {
@@ -53,7 +53,7 @@ export const getAllAnnouncements = async (
                 const topicSet = expandedTopicSets[i];
                 const placeholders = topicSet.map(() => '?').join(',');
                 conditions.push(`a.announcement_id IN (
-          SELECT announcement_id FROM announcement_topics 
+          SELECT announcement_id FROM announcement_topic 
           WHERE topic_id IN (${placeholders})
         )`);
                 params.push(...topicSet);
@@ -70,15 +70,15 @@ export const getAllAnnouncements = async (
             await Promise.all(
                 announcements.map(async (announcement) => {
                     const [topics] = await pool.query<Topic[]>(
-                        `SELECT t.* FROM topics t
-           INNER JOIN announcement_topics at ON t.topic_id = at.topic_id
+                        `SELECT t.* FROM topic t
+           INNER JOIN announcement_topic at ON t.topic_id = at.topic_id
            WHERE at.announcement_id = ?`,
                         [announcement.announcement_id]
                     );
 
                     const [rooms] = await pool.query<Room[]>(
-                        `SELECT r.* FROM rooms r
-           INNER JOIN announcement_rooms ar ON r.room_id = ar.room_id
+                        `SELECT r.* FROM room r
+           INNER JOIN announcement_room ar ON r.room_id = ar.room_id
            WHERE ar.announcement_id = ?`,
                         [announcement.announcement_id]
                     );
@@ -102,7 +102,7 @@ export const getAnnouncementById = async (
         const { id } = req.params;
 
         const [rows] = await pool.query<Announcement[]>(
-            'SELECT * FROM announcements WHERE announcement_id = ?',
+            'SELECT * FROM announcement WHERE announcement_id = ?',
             [id]
         );
 
@@ -114,15 +114,15 @@ export const getAnnouncementById = async (
         const announcement = rows[0];
 
         const [topics] = await pool.query<Topic[]>(
-            `SELECT t.* FROM topics t
-            INNER JOIN announcement_topics at ON t.topic_id = at.topic_id
+            `SELECT t.* FROM topic t
+            INNER JOIN announcement_topic at ON t.topic_id = at.topic_id
             WHERE at.announcement_id = ?`,
             [id]
         );
 
         const [rooms] = await pool.query<Room[]>(
-            `SELECT r.* FROM rooms r
-            INNER JOIN announcement_rooms ar ON r.room_id = ar.room_id
+            `SELECT r.* FROM room r
+            INNER JOIN announcement_room ar ON r.room_id = ar.room_id
             WHERE ar.announcement_id = ?`,
             [id]
         );
@@ -166,7 +166,7 @@ export const createAnnouncement = async (
         }
 
         const [result] = await connection.query<ResultSetHeader>(
-            'INSERT INTO announcements (title, description, start_date, end_date) VALUES (?, ?, ?, ?)',
+            'INSERT INTO announcement (title, description, start_date, end_date) VALUES (?, ?, ?, ?)',
             [title, description, start_date || null, end_date || null]
         );
 
@@ -179,7 +179,7 @@ export const createAnnouncement = async (
                 topicId,
             ]);
             await connection.query(
-                'INSERT INTO announcement_topics (announcement_id, topic_id) VALUES ?',
+                'INSERT INTO announcement_topic (announcement_id, topic_id) VALUES ?',
                 [topicValues]
             );
         }
@@ -191,7 +191,7 @@ export const createAnnouncement = async (
                 roomId,
             ]);
             await connection.query(
-                'INSERT INTO announcement_rooms (announcement_id, room_id) VALUES ?',
+                'INSERT INTO announcement_room (announcement_id, room_id) VALUES ?',
                 [roomValues]
             );
         }
@@ -199,20 +199,20 @@ export const createAnnouncement = async (
         await connection.commit();
 
         const [rows] = await pool.query<Announcement[]>(
-            'SELECT * FROM announcements WHERE announcement_id = ?',
+            'SELECT * FROM announcement WHERE announcement_id = ?',
             [announcementId]
         );
 
         const [topics] = await pool.query<Topic[]>(
-            `SELECT t.* FROM topics t
-            INNER JOIN announcement_topics at ON t.topic_id = at.topic_id
+            `SELECT t.* FROM topic t
+            INNER JOIN announcement_topic at ON t.topic_id = at.topic_id
             WHERE at.announcement_id = ?`,
             [announcementId]
         );
 
         const [rooms] = await pool.query<Room[]>(
-            `SELECT r.* FROM rooms r
-            INNER JOIN announcement_rooms ar ON r.room_id = ar.room_id
+            `SELECT r.* FROM room r
+            INNER JOIN announcement_room ar ON r.room_id = ar.room_id
             WHERE ar.announcement_id = ?`,
             [announcementId]
         );
@@ -260,7 +260,7 @@ export const updateAnnouncement = async (
         }
 
         const [result] = await connection.query<ResultSetHeader>(
-            'UPDATE announcements SET title = ?, description = ?, start_date = ?, end_date = ? WHERE announcement_id = ?',
+            'UPDATE announcement SET title = ?, description = ?, start_date = ?, end_date = ? WHERE announcement_id = ?',
             [title, description, start_date || null, end_date || null, id]
         );
 
@@ -272,11 +272,11 @@ export const updateAnnouncement = async (
 
         // Delete existing topics and rooms
         await connection.query(
-            'DELETE FROM announcement_topics WHERE announcement_id = ?',
+            'DELETE FROM announcement_topic WHERE announcement_id = ?',
             [id]
         );
         await connection.query(
-            'DELETE FROM announcement_rooms WHERE announcement_id = ?',
+            'DELETE FROM announcement_room WHERE announcement_id = ?',
             [id]
         );
 
@@ -287,7 +287,7 @@ export const updateAnnouncement = async (
                 topicId,
             ]);
             await connection.query(
-                'INSERT INTO announcement_topics (announcement_id, topic_id) VALUES ?',
+                'INSERT INTO announcement_topic (announcement_id, topic_id) VALUES ?',
                 [topicValues]
             );
         }
@@ -296,7 +296,7 @@ export const updateAnnouncement = async (
         if (room_ids && Array.isArray(room_ids) && room_ids.length > 0) {
             const roomValues = room_ids.map((roomId: number) => [id, roomId]);
             await connection.query(
-                'INSERT INTO announcement_rooms (announcement_id, room_id) VALUES ?',
+                'INSERT INTO announcement_room (announcement_id, room_id) VALUES ?',
                 [roomValues]
             );
         }
@@ -304,20 +304,20 @@ export const updateAnnouncement = async (
         await connection.commit();
 
         const [rows] = await pool.query<Announcement[]>(
-            'SELECT * FROM announcements WHERE announcement_id = ?',
+            'SELECT * FROM announcement WHERE announcement_id = ?',
             [id]
         );
 
         const [topics] = await pool.query<Topic[]>(
-            `SELECT t.* FROM topics t
-            INNER JOIN announcement_topics at ON t.topic_id = at.topic_id
+            `SELECT t.* FROM topic t
+            INNER JOIN announcement_topic at ON t.topic_id = at.topic_id
             WHERE at.announcement_id = ?`,
             [id]
         );
 
         const [rooms] = await pool.query<Room[]>(
-            `SELECT r.* FROM rooms r
-            INNER JOIN announcement_rooms ar ON r.room_id = ar.room_id
+            `SELECT r.* FROM room r
+            INNER JOIN announcement_room ar ON r.room_id = ar.room_id
             WHERE ar.announcement_id = ?`,
             [id]
         );
@@ -345,7 +345,7 @@ export const deleteAnnouncement = async (
         const { id } = req.params;
 
         const [result] = await pool.query<ResultSetHeader>(
-            'DELETE FROM announcements WHERE announcement_id = ?',
+            'DELETE FROM announcement WHERE announcement_id = ?',
             [id]
         );
 

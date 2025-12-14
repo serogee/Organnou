@@ -8,7 +8,7 @@ export const getAllTopics = async (
 ): Promise<void> => {
     try {
         const [rows] = await pool.query<Topic[]>(
-            'SELECT * FROM topics ORDER BY topic_name'
+            'SELECT * FROM topic ORDER BY topic_name'
         );
         res.json(rows);
     } catch (error) {
@@ -24,7 +24,7 @@ export const getTopicById = async (
     try {
         const { id } = req.params;
         const [rows] = await pool.query<Topic[]>(
-            'SELECT * FROM topics WHERE topic_id = ?',
+            'SELECT * FROM topic WHERE topic_id = ?',
             [id]
         );
 
@@ -53,12 +53,12 @@ export const createTopic = async (
         }
 
         const [result] = await pool.query<ResultSetHeader>(
-            'INSERT INTO topics (topic_name, parent_topic_id) VALUES (?, ?)',
+            'INSERT INTO topic (topic_name, parent_topic_id) VALUES (?, ?)',
             [topic_name, parent_topic_id || null]
         );
 
         const [rows] = await pool.query<Topic[]>(
-            'SELECT * FROM topics WHERE topic_id = ?',
+            'SELECT * FROM topic WHERE topic_id = ?',
             [result.insertId]
         );
 
@@ -83,7 +83,7 @@ export const updateTopic = async (
         }
 
         const [result] = await pool.query<ResultSetHeader>(
-            'UPDATE topics SET topic_name = ?, parent_topic_id = ? WHERE topic_id = ?',
+            'UPDATE topic SET topic_name = ?, parent_topic_id = ? WHERE topic_id = ?',
             [topic_name, parent_topic_id || null, id]
         );
 
@@ -93,7 +93,7 @@ export const updateTopic = async (
         }
 
         const [rows] = await pool.query<Topic[]>(
-            'SELECT * FROM topics WHERE topic_id = ?',
+            'SELECT * FROM topic WHERE topic_id = ?',
             [id]
         );
         res.json(rows[0]);
@@ -111,7 +111,7 @@ export const deleteTopic = async (
         const { id } = req.params;
 
         const [result] = await pool.query<ResultSetHeader>(
-            'DELETE FROM topics WHERE topic_id = ?',
+            'DELETE FROM topic WHERE topic_id = ?',
             [id]
         );
 

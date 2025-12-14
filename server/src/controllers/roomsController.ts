@@ -8,7 +8,7 @@ export const getAllRooms = async (
 ): Promise<void> => {
     try {
         const [rows] = await pool.query<Room[]>(
-            'SELECT * FROM rooms ORDER BY room_name'
+            'SELECT * FROM room ORDER BY room_name'
         );
         res.json(rows);
     } catch (error) {
@@ -24,7 +24,7 @@ export const getRoomById = async (
     try {
         const { id } = req.params;
         const [rows] = await pool.query<Room[]>(
-            'SELECT * FROM rooms WHERE room_id = ?',
+            'SELECT * FROM room WHERE room_id = ?',
             [id]
         );
 
@@ -47,7 +47,7 @@ export const getRoomsByBuilding = async (
     try {
         const { buildingId } = req.params;
         const [rows] = await pool.query<Room[]>(
-            'SELECT * FROM rooms WHERE building_id = ? ORDER BY room_name',
+            'SELECT * FROM room WHERE building_id = ? ORDER BY room_name',
             [buildingId]
         );
         res.json(rows);
@@ -72,12 +72,12 @@ export const createRoom = async (
         }
 
         const [result] = await pool.query<ResultSetHeader>(
-            'INSERT INTO rooms (room_name, building_id) VALUES (?, ?)',
+            'INSERT INTO room (room_name, building_id) VALUES (?, ?)',
             [room_name, building_id]
         );
 
         const [rows] = await pool.query<Room[]>(
-            'SELECT * FROM rooms WHERE room_id = ?',
+            'SELECT * FROM room WHERE room_id = ?',
             [result.insertId]
         );
 
@@ -104,7 +104,7 @@ export const updateRoom = async (
         }
 
         const [result] = await pool.query<ResultSetHeader>(
-            'UPDATE rooms SET room_name = ?, building_id = ? WHERE room_id = ?',
+            'UPDATE room SET room_name = ?, building_id = ? WHERE room_id = ?',
             [room_name, building_id, id]
         );
 
@@ -114,7 +114,7 @@ export const updateRoom = async (
         }
 
         const [rows] = await pool.query<Room[]>(
-            'SELECT * FROM rooms WHERE room_id = ?',
+            'SELECT * FROM room WHERE room_id = ?',
             [id]
         );
         res.json(rows[0]);
@@ -132,7 +132,7 @@ export const deleteRoom = async (
         const { id } = req.params;
 
         const [result] = await pool.query<ResultSetHeader>(
-            'DELETE FROM rooms WHERE room_id = ?',
+            'DELETE FROM room WHERE room_id = ?',
             [id]
         );
 
